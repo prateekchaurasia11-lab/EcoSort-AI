@@ -1,0 +1,15 @@
+.venv/
+.inferenv/
+.labelenv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+/Data/
+/Models/
+*.pth
+*.pt
+*.zip
+
+.env
+.env.*
