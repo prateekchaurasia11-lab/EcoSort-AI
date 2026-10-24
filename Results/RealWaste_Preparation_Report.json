@@ -1,0 +1,61 @@
+{
+  "source_url": "https://archive.ics.uci.edu/static/public/908/realwaste.zip",
+  "source_doi": "https://doi.org/10.24432/C5SS4G",
+  "citation": "Single, S., Iranmanesh, S., & Raad, R. (2023). RealWaste. UCI Machine Learning Repository. https://doi.org/10.24432/C5SS4G",
+  "license": "CC BY 4.0",
+  "archive_sha256": "1ede08b32358ee62065bcc1c8cb47a2ece04e8dff5b1fb53342bb8750895b2f3",
+  "class_mapping": {
+    "Cardboard": "cardboard",
+    "Glass": "glass",
+    "Metal": "metal",
+    "Miscellaneous Trash": "trash",
+    "Paper": "paper",
+    "Plastic": "plastic"
+  },
+  "unmapped_classes_excluded": [
+    "Food Organics",
+    "Textile Trash",
+    "Vegetation"
+  ],
+  "candidate_images": 3587,
+  "usable_images": 3587,
+  "counts": {
+    "train": {
+      "cardboard": 320,
+      "glass": 300,
+      "metal": 550,
+      "trash": 340,
+      "paper": 340,
+      "plastic": 640
+    },
+    "val": {
+      "cardboard": 80,
+      "glass": 60,
+      "metal": 120,
+      "trash": 75,
+      "paper": 80,
+      "plastic": 160
+    },
+    "test": {
+      "cardboard": 61,
+      "glass": 60,
+      "metal": 120,
+      "trash": 80,
+      "paper": 80,
+      "plastic": 121
+    }
+  },
+  "seed": 2026,
+  "sequence_block_size": 20,
+  "near_duplicate_dhash_threshold": 4,
+  "split_policy": "Approximately 70/15/15 by grouped source blocks, stratified on majority class. Groups combine within-class filename blocks and near-identical images.",
+  "limitation": "Filename blocks are a conservative sequence heuristic, not verified capture sessions. Perceptual hashing cannot find every related scene. RealWaste comes from one landfill environment.",
+  "preparation_date": "2026-10-24",
+  "excluded_count": 0,
+  "new_gpu_training_run": false,
+  "combined_counts": {
+    "train": 4470,
+    "val": 997,
+    "test": 950
+  }
+}
