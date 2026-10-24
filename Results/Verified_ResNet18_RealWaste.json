@@ -1,0 +1,671 @@
+{
+  "verification_date": "2026-10-24",
+  "checkpoint_sha256": "94aabaae08d1f2b7f967cb359f838cd7a9a89c10a8e77cc771197e4518fbf55b",
+  "checkpoint_load_and_cpu_inference_verified": true,
+  "selected_epoch": 14,
+  "frozen_membership_sha256": "b92dd69fcce6230560c70219435db95676711df4cddafb0aacde2f2a409620d0",
+  "reported_source_test": {
+    "realwaste": {
+      "n": 522,
+      "accuracy": 0.7452107279693486,
+      "confusion_matrix": [
+        [
+          28,
+          0,
+          6,
+          7,
+          12,
+          8
+        ],
+        [
+          0,
+          42,
+          3,
+          0,
+          11,
+          4
+        ],
+        [
+          1,
+          5,
+          99,
+          0,
+          10,
+          5
+        ],
+        [
+          4,
+          2,
+          6,
+          63,
+          0,
+          5
+        ],
+        [
+          0,
+          6,
+          8,
+          1,
+          97,
+          9
+        ],
+        [
+          0,
+          0,
+          4,
+          2,
+          14,
+          60
+        ]
+      ],
+      "macro_f1": 0.7314027969446631,
+      "class_report": {
+        "cardboard": {
+          "precision": 0.8484848484848485,
+          "recall": 0.45901639344262296,
+          "f1-score": 0.5957446808510638,
+          "support": 61.0
+        },
+        "glass": {
+          "precision": 0.7636363636363637,
+          "recall": 0.7,
+          "f1-score": 0.7304347826086957,
+          "support": 60.0
+        },
+        "metal": {
+          "precision": 0.7857142857142857,
+          "recall": 0.825,
+          "f1-score": 0.8048780487804879,
+          "support": 120.0
+        },
+        "paper": {
+          "precision": 0.863013698630137,
+          "recall": 0.7875,
+          "f1-score": 0.8235294117647058,
+          "support": 80.0
+        },
+        "plastic": {
+          "precision": 0.6736111111111112,
+          "recall": 0.8016528925619835,
+          "f1-score": 0.7320754716981132,
+          "support": 121.0
+        },
+        "trash": {
+          "precision": 0.6593406593406593,
+          "recall": 0.75,
+          "f1-score": 0.7017543859649122,
+          "support": 80.0
+        },
+        "accuracy": 0.7452107279693486,
+        "macro avg": {
+          "precision": 0.7656334944862343,
+          "recall": 0.7205282143341011,
+          "f1-score": 0.7314027969446631,
+          "support": 522.0
+        },
+        "weighted avg": {
+          "precision": 0.7570052968267815,
+          "recall": 0.7452107279693486,
+          "f1-score": 0.7420607552412574,
+          "support": 522.0
+        }
+      }
+    },
+    "taco": {
+      "n": 46,
+      "accuracy": 0.9782608695652174,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          45,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "plastic_recall": 0.9782608695652174,
+      "note": "Positive-only wrapper set: this measures recall, not six-class accuracy or plastic precision.",
+      "by_source_category": {
+        "Crisp packet": {
+          "n": 4,
+          "plastic_recall": 1.0
+        },
+        "Other plastic wrapper": {
+          "n": 18,
+          "plastic_recall": 0.9444444444444444
+        },
+        "Plastic film": {
+          "n": 24,
+          "plastic_recall": 1.0
+        }
+      }
+    },
+    "trashnet": {
+      "n": 382,
+      "accuracy": 0.8481675392670157,
+      "confusion_matrix": [
+        [
+          53,
+          0,
+          0,
+          5,
+          2,
+          1
+        ],
+        [
+          0,
+          65,
+          3,
+          0,
+          7,
+          0
+        ],
+        [
+          0,
+          6,
+          56,
+          0,
+          0,
+          0
+        ],
+        [
+          5,
+          1,
+          1,
+          75,
+          2,
+          6
+        ],
+        [
+          2,
+          10,
+          1,
+          0,
+          58,
+          2
+        ],
+        [
+          2,
+          1,
+          0,
+          0,
+          1,
+          17
+        ]
+      ],
+      "macro_f1": 0.8353480902313749,
+      "class_report": {
+        "cardboard": {
+          "precision": 0.8548387096774194,
+          "recall": 0.8688524590163934,
+          "f1-score": 0.8617886178861789,
+          "support": 61.0
+        },
+        "glass": {
+          "precision": 0.7831325301204819,
+          "recall": 0.8666666666666667,
+          "f1-score": 0.8227848101265823,
+          "support": 75.0
+        },
+        "metal": {
+          "precision": 0.9180327868852459,
+          "recall": 0.9032258064516129,
+          "f1-score": 0.9105691056910569,
+          "support": 62.0
+        },
+        "paper": {
+          "precision": 0.9375,
+          "recall": 0.8333333333333334,
+          "f1-score": 0.8823529411764706,
+          "support": 90.0
+        },
+        "plastic": {
+          "precision": 0.8285714285714286,
+          "recall": 0.7945205479452054,
+          "f1-score": 0.8111888111888111,
+          "support": 73.0
+        },
+        "trash": {
+          "precision": 0.6538461538461539,
+          "recall": 0.8095238095238095,
+          "f1-score": 0.723404255319149,
+          "support": 21.0
+        },
+        "accuracy": 0.8481675392670157,
+        "macro avg": {
+          "precision": 0.8293202681834551,
+          "recall": 0.8460204371561701,
+          "f1-score": 0.8353480902313749,
+          "support": 382.0
+        },
+        "weighted avg": {
+          "precision": 0.8544230820752029,
+          "recall": 0.8481675392670157,
+          "f1-score": 0.8496159379260833,
+          "support": 382.0
+        }
+      }
+    }
+  },
+  "reported_baseline_source_test": {
+    "realwaste": {
+      "n": 522,
+      "accuracy": 0.47701149425287354,
+      "confusion_matrix": [
+        [
+          18,
+          0,
+          3,
+          10,
+          8,
+          22
+        ],
+        [
+          0,
+          9,
+          8,
+          0,
+          25,
+          18
+        ],
+        [
+          0,
+          13,
+          77,
+          0,
+          2,
+          28
+        ],
+        [
+          5,
+          0,
+          2,
+          41,
+          3,
+          29
+        ],
+        [
+          0,
+          1,
+          18,
+          2,
+          63,
+          37
+        ],
+        [
+          9,
+          1,
+          7,
+          5,
+          17,
+          41
+        ]
+      ],
+      "macro_f1": 0.44994496935613393,
+      "class_report": {
+        "cardboard": {
+          "precision": 0.5625,
+          "recall": 0.29508196721311475,
+          "f1-score": 0.3870967741935484,
+          "support": 61.0
+        },
+        "glass": {
+          "precision": 0.375,
+          "recall": 0.15,
+          "f1-score": 0.21428571428571427,
+          "support": 60.0
+        },
+        "metal": {
+          "precision": 0.6695652173913044,
+          "recall": 0.6416666666666667,
+          "f1-score": 0.6553191489361702,
+          "support": 120.0
+        },
+        "paper": {
+          "precision": 0.7068965517241379,
+          "recall": 0.5125,
+          "f1-score": 0.5942028985507246,
+          "support": 80.0
+        },
+        "plastic": {
+          "precision": 0.5338983050847458,
+          "recall": 0.5206611570247934,
+          "f1-score": 0.5271966527196653,
+          "support": 121.0
+        },
+        "trash": {
+          "precision": 0.2342857142857143,
+          "recall": 0.5125,
+          "f1-score": 0.3215686274509804,
+          "support": 80.0
+        },
+        "accuracy": 0.47701149425287354,
+        "macro avg": {
+          "precision": 0.5136909647476504,
+          "recall": 0.43873496515076243,
+          "f1-score": 0.44994496935613393,
+          "support": 522.0
+        },
+        "weighted avg": {
+          "precision": 0.5307597744885038,
+          "recall": 0.47701149425287354,
+          "f1-score": 0.4830667835526927,
+          "support": 522.0
+        }
+      }
+    },
+    "taco": {
+      "n": 46,
+      "accuracy": 1.0,
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          46,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "plastic_recall": 1.0,
+      "note": "Positive-only wrapper set: this measures recall, not six-class accuracy or plastic precision.",
+      "by_source_category": {
+        "Crisp packet": {
+          "n": 4,
+          "plastic_recall": 1.0
+        },
+        "Other plastic wrapper": {
+          "n": 18,
+          "plastic_recall": 1.0
+        },
+        "Plastic film": {
+          "n": 24,
+          "plastic_recall": 1.0
+        }
+      }
+    },
+    "trashnet": {
+      "n": 382,
+      "accuracy": 0.8324607329842932,
+      "confusion_matrix": [
+        [
+          51,
+          0,
+          2,
+          7,
+          0,
+          1
+        ],
+        [
+          0,
+          58,
+          10,
+          1,
+          6,
+          0
+        ],
+        [
+          0,
+          3,
+          59,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          2,
+          3,
+          78,
+          2,
+          2
+        ],
+        [
+          0,
+          10,
+          1,
+          0,
+          57,
+          5
+        ],
+        [
+          0,
+          1,
+          0,
+          4,
+          1,
+          15
+        ]
+      ],
+      "macro_f1": 0.8159037689436817,
+      "class_report": {
+        "cardboard": {
+          "precision": 0.9444444444444444,
+          "recall": 0.8360655737704918,
+          "f1-score": 0.8869565217391304,
+          "support": 61.0
+        },
+        "glass": {
+          "precision": 0.7837837837837838,
+          "recall": 0.7733333333333333,
+          "f1-score": 0.7785234899328859,
+          "support": 75.0
+        },
+        "metal": {
+          "precision": 0.7866666666666666,
+          "recall": 0.9516129032258065,
+          "f1-score": 0.8613138686131386,
+          "support": 62.0
+        },
+        "paper": {
+          "precision": 0.8666666666666667,
+          "recall": 0.8666666666666667,
+          "f1-score": 0.8666666666666667,
+          "support": 90.0
+        },
+        "plastic": {
+          "precision": 0.8636363636363636,
+          "recall": 0.7808219178082192,
+          "f1-score": 0.8201438848920863,
+          "support": 73.0
+        },
+        "trash": {
+          "precision": 0.6521739130434783,
+          "recall": 0.7142857142857143,
+          "f1-score": 0.6818181818181818,
+          "support": 21.0
+        },
+        "accuracy": 0.8324607329842932,
+        "macro avg": {
+          "precision": 0.8162286397069006,
+          "recall": 0.8204643515150386,
+          "f1-score": 0.8159037689436817,
+          "support": 382.0
+        },
+        "weighted avg": {
+          "precision": 0.8374589920094132,
+          "recall": 0.8324607329842932,
+          "f1-score": 0.8326799864931206,
+          "support": 382.0
+        }
+      }
+    }
+  },
+  "four_photo_diagnostics": [
+    {
+      "name": "Crisp_packet_frost",
+      "source": "https://www.imperial.ac.uk/news/249435/simplify-plastics-boost-recycling-pollution-imperial/",
+      "old_prediction": "plastic",
+      "old_scores": {
+        "cardboard": 0.02890404686331749,
+        "glass": 0.010581028647720814,
+        "metal": 0.4445282816886902,
+        "paper": 0.01465249340981245,
+        "plastic": 0.4929353892803192,
+        "trash": 0.008398718200623989
+      },
+      "new_prediction": "plastic",
+      "new_score": 0.9590818285942078,
+      "new_scores": {
+        "cardboard": 0.0015949869994074106,
+        "glass": 0.00013548262359108776,
+        "metal": 0.02551649510860443,
+        "paper": 0.0027375814970582724,
+        "plastic": 0.9590818285942078,
+        "trash": 0.01093362458050251
+      }
+    },
+    {
+      "name": "Green_packet_beach",
+      "source": "https://timesofindia.indiatimes.com/city/chennai/why-are-our-beaches-in-disarray/articleshow/101093418.cms",
+      "old_prediction": "plastic",
+      "old_scores": {
+        "cardboard": 0.08244740217924118,
+        "glass": 0.0028173073660582304,
+        "metal": 0.08926290273666382,
+        "paper": 0.02395210973918438,
+        "plastic": 0.5867602825164795,
+        "trash": 0.214759960770607
+      },
+      "new_prediction": "plastic",
+      "new_score": 0.6430447101593018,
+      "new_scores": {
+        "cardboard": 0.006263330578804016,
+        "glass": 0.00026902806712314487,
+        "metal": 0.016049997881054878,
+        "paper": 0.26412972807884216,
+        "plastic": 0.6430447101593018,
+        "trash": 0.07024320960044861
+      }
+    },
+    {
+      "name": "Lays_green_road",
+      "source": "https://www.crdc-sa.com/project-study/welcome-to-the-concrete-solution-to-plastic-waste",
+      "old_prediction": "plastic",
+      "old_scores": {
+        "cardboard": 0.03278735652565956,
+        "glass": 0.004233516752719879,
+        "metal": 0.16700148582458496,
+        "paper": 0.08613637089729309,
+        "plastic": 0.6051644682884216,
+        "trash": 0.1046767607331276
+      },
+      "new_prediction": "plastic",
+      "new_score": 0.8101526498794556,
+      "new_scores": {
+        "cardboard": 0.0066437385976314545,
+        "glass": 0.0014917899388819933,
+        "metal": 0.05230005457997322,
+        "paper": 0.09039146453142166,
+        "plastic": 0.8101526498794556,
+        "trash": 0.03902029991149902
+      }
+    },
+    {
+      "name": "Cheetos_leaves",
+      "source": "https://www.abc.net.au/listen/programs/storystream/environmental-warrior/102534960",
+      "old_prediction": "plastic",
+      "old_scores": {
+        "cardboard": 0.0583202987909317,
+        "glass": 0.0014653685502707958,
+        "metal": 0.054792650043964386,
+        "paper": 0.28407996892929077,
+        "plastic": 0.5770199298858643,
+        "trash": 0.024321720004081726
+      },
+      "new_prediction": "paper",
+      "new_score": 0.9517967104911804,
+      "new_scores": {
+        "cardboard": 0.0010066007962450385,
+        "glass": 4.415766670717858e-05,
+        "metal": 0.0029504960402846336,
+        "paper": 0.9517967104911804,
+        "plastic": 0.04254189878702164,
+        "trash": 0.0016600759699940681
+      }
+    }
+  ],
+  "limits": "Saved dataset metrics were checked for consistency; full TrashNet test predictions were not independently reproduced. Four previously inspected online photos are diagnostic only.",
+  "new_efficientnet_gpu_training_completed": false
+}
