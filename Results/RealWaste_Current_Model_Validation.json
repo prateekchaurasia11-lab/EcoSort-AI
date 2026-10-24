@@ -1,0 +1,116 @@
+{
+  "evaluation": "Current uploaded TACO checkpoint on NEW RealWaste validation only. New RealWaste test not evaluated here.",
+  "n": 575,
+  "accuracy": 0.4260869565217391,
+  "macro_f1": 0.4090556605775501,
+  "classes": [
+    "cardboard",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "trash"
+  ],
+  "class_report": {
+    "cardboard": {
+      "precision": 0.48484848484848486,
+      "recall": 0.2,
+      "f1-score": 0.2831858407079646,
+      "support": 80.0
+    },
+    "glass": {
+      "precision": 0.5,
+      "recall": 0.16666666666666666,
+      "f1-score": 0.25,
+      "support": 60.0
+    },
+    "metal": {
+      "precision": 0.6194690265486725,
+      "recall": 0.5833333333333334,
+      "f1-score": 0.6008583690987125,
+      "support": 120.0
+    },
+    "paper": {
+      "precision": 0.7037037037037037,
+      "recall": 0.475,
+      "f1-score": 0.5671641791044776,
+      "support": 80.0
+    },
+    "plastic": {
+      "precision": 0.5074626865671642,
+      "recall": 0.425,
+      "f1-score": 0.46258503401360546,
+      "support": 160.0
+    },
+    "trash": {
+      "precision": 0.19457013574660634,
+      "recall": 0.5733333333333334,
+      "f1-score": 0.2905405405405405,
+      "support": 75.0
+    },
+    "accuracy": 0.4260869565217391,
+    "macro avg": {
+      "precision": 0.5016756729024386,
+      "recall": 0.4038888888888889,
+      "f1-score": 0.4090556605775501,
+      "support": 575.0
+    },
+    "weighted avg": {
+      "precision": 0.5134039100900131,
+      "recall": 0.4260869565217391,
+      "f1-score": 0.4364089597557535,
+      "support": 575.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      16,
+      1,
+      6,
+      8,
+      13,
+      36
+    ],
+    [
+      1,
+      10,
+      15,
+      1,
+      23,
+      10
+    ],
+    [
+      2,
+      5,
+      70,
+      0,
+      7,
+      36
+    ],
+    [
+      9,
+      0,
+      1,
+      38,
+      7,
+      25
+    ],
+    [
+      2,
+      4,
+      15,
+      0,
+      68,
+      71
+    ],
+    [
+      3,
+      0,
+      6,
+      7,
+      16,
+      43
+    ]
+  ],
+  "checkpoint_sha256": "eda93d4a9b49657f0a0c95a8640a4141e0ce9a9fac30a0fffa655cf0c3c4fce3"
+}
