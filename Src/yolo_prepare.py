@@ -7,7 +7,11 @@ import random
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+try:
+    from PIL import Image, ImageDraw
+except ImportError:  # pragma: no cover
+    Image = None  # type: ignore[assignment]
+    ImageDraw = None  # type: ignore[assignment]
 
 CLASS_NAMES = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
 CLASS_TO_ID = {name: idx for idx, name in enumerate(CLASS_NAMES)}
@@ -126,6 +130,9 @@ def convert_coco_to_yolo(
     visual_dir.mkdir(parents=True, exist_ok=True)
     rendered = 0
 
+    if visual_samples > 0 and Image is None:
+        print("WARNING: Pillow (PIL) is not installed; skipping visual check overlays (install via `pip install pillow`).")
+
     for g, img_ids in groups.items():
         split = split_for_group[g]
         label_dir = output_dir / "labels" / split
@@ -161,7 +168,7 @@ def convert_coco_to_yolo(
             split_image_counts[split] += 1
 
             src_img = images_root / rel_name
-            if rendered < visual_samples and src_img.is_file():
+            if Image is not None and ImageDraw is not None and rendered < visual_samples and src_img.is_file():
                 with Image.open(src_img) as im:
                     canvas = im.convert("RGB")
                     draw = ImageDraw.Draw(canvas)
