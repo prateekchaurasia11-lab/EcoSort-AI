@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -16,13 +17,15 @@ except ImportError:  # pragma: no cover
 CLASS_NAMES = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
 CLASS_TO_ID = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
-# Conservative TACO category -> EcoSort 6-class mapping (uncertain/composite -> None = deferred)
+# Conservative TACO category -> EcoSort 6-class mapping (uncertain/composite/hazardous -> None = deferred)
 TACO_TO_ECOSORT: dict[str, str | None] = {
     "Cardboard": "cardboard",
     "Corrugated carton": "cardboard",
     "Egg carton": "cardboard",
+    "Toilet tube": "cardboard",
     "Paper bag": "paper",
     "Paper cup": "paper",
+    "Paper straw": "paper",
     "Tissues": "trash",
     "Wrapping paper": "paper",
     "Magazine paper": "paper",
@@ -35,9 +38,12 @@ TACO_TO_ECOSORT: dict[str, str | None] = {
     "Aluminium blister pack": "trash",
     "Can": "metal",
     "Drink can": "metal",
+    "Food Can": "metal",
     "Food can": "metal",
     "Aerosol": "metal",
     "Metal bottle cap": "metal",
+    "Metal lid": "metal",
+    "Pop tab": "metal",
     "Scrap metal": "metal",
     "Clear plastic bottle": "plastic",
     "Other plastic bottle": "plastic",
@@ -46,18 +52,36 @@ TACO_TO_ECOSORT: dict[str, str | None] = {
     "Plastic film": "plastic",
     "Single-use carrier bag": "plastic",
     "Garbage bag": "plastic",
+    "Polypropylene bag": "plastic",
     "Plastic straw": "plastic",
     "Plastic utensils": "plastic",
     "Disposable plastic cup": "plastic",
+    "Other plastic cup": "plastic",
     "Other plastic container": "plastic",
+    "Other plastic": "plastic",
+    "Tupperware": "plastic",
+    "Spread tub": "plastic",
+    "Six pack rings": "plastic",
     "Other plastic wrapper": "trash",
     "Crisp packet": "trash",
-    "Drink carton": None,  # Deferred pending Prateek/supervisor policy confirmation
-    "Tetrapak": None,      # Deferred pending Prateek/supervisor policy confirmation
     "Cigarette": "trash",
     "Styrofoam piece": "trash",
+    "Foam food container": "trash",
+    "Foam cup": "trash",
+    "Food waste": "trash",
     "Shoe": "trash",
-    "Battery": None,       # Hazardous/e-waste -> deferred / unknown rejection
+    # Deferred pending Prateek/supervisor material & unknown-rejection policy:
+    "Drink carton": None,
+    "Tetrapak": None,
+    "Other carton": None,
+    "Meal carton": None,
+    "Pizza box": None,
+    "Disposable food container": None,
+    "Carded blister pack": None,
+    "Squeezable tube": None,
+    "Plastic glooves": None,
+    "Rope & strings": None,
+    "Battery": None,
     "Unlabeled litter": None,
 }
 
@@ -89,6 +113,7 @@ def convert_coco_to_yolo(
     output_dir: Path,
     seed: int = 42,
     visual_samples: int = 12,
+    require_images: bool = False,
 ) -> int:
     data = json.loads(coco_json.read_text(encoding="utf-8"))
     cat_id_to_name = {c["id"]: c["name"] for c in data.get("categories", [])}
@@ -126,6 +151,7 @@ def convert_coco_to_yolo(
     box_counts: Counter[str] = Counter()
     deferred_cats: Counter[str] = Counter()
     split_image_counts: Counter[str] = Counter()
+    copied_images = 0
     visual_dir = output_dir / "visual_checks"
     visual_dir.mkdir(parents=True, exist_ok=True)
     rendered = 0
@@ -136,11 +162,17 @@ def convert_coco_to_yolo(
     for g, img_ids in groups.items():
         split = split_for_group[g]
         label_dir = output_dir / "labels" / split
+        image_dir = output_dir / "images" / split
         label_dir.mkdir(parents=True, exist_ok=True)
+        image_dir.mkdir(parents=True, exist_ok=True)
 
         for img_id in img_ids:
             img_info = images_by_id[img_id]
             rel_name = img_info["file_name"]
+            src_img = images_root / rel_name
+            if require_images and not src_img.is_file():
+                continue
+
             w, h = int(img_info["width"]), int(img_info["height"])
             yolo_lines: list[str] = []
             draw_boxes: list[tuple[list[float], str]] = []
@@ -167,16 +199,21 @@ def convert_coco_to_yolo(
             (label_dir / f"{out_stem}.txt").write_text("\n".join(yolo_lines) + "\n", encoding="utf-8")
             split_image_counts[split] += 1
 
-            src_img = images_root / rel_name
-            if Image is not None and ImageDraw is not None and rendered < visual_samples and src_img.is_file():
-                with Image.open(src_img) as im:
-                    canvas = im.convert("RGB")
-                    draw = ImageDraw.Draw(canvas)
-                    for (bx, by, bw_px, bh_px), lbl in draw_boxes:
-                        draw.rectangle([bx, by, bx + bw_px, by + bh_px], outline="lime", width=3)
-                        draw.text((bx + 4, max(0.0, by - 14)), lbl, fill="lime")
-                    canvas.save(visual_dir / f"{split}_{out_stem}_check.jpg")
-                rendered += 1
+            if src_img.is_file():
+                dst_img = image_dir / f"{out_stem}{src_img.suffix.lower()}"
+                if not dst_img.exists():
+                    shutil.copy2(src_img, dst_img)
+                copied_images += 1
+
+                if Image is not None and ImageDraw is not None and rendered < visual_samples:
+                    with Image.open(src_img) as im:
+                        canvas = im.convert("RGB")
+                        draw = ImageDraw.Draw(canvas)
+                        for (bx, by, bw_px, bh_px), lbl in draw_boxes:
+                            draw.rectangle([bx, by, bx + bw_px, by + bh_px], outline="lime", width=3)
+                            draw.text((bx + 4, max(0.0, by - 14)), lbl, fill="lime")
+                        canvas.save(visual_dir / f"{split}_{out_stem}_check.jpg")
+                    rendered += 1
 
     yaml_text = (
         f"path: {output_dir.as_posix()}\n"
@@ -189,6 +226,7 @@ def convert_coco_to_yolo(
     (output_dir / "data.yaml").write_text(yaml_text, encoding="utf-8")
 
     print(f"Converted images per split: {dict(split_image_counts)}")
+    print(f"Images copied to YOLO folders: {copied_images}")
     print(f"Converted boxes per class: {dict(box_counts)}")
     print(f"Deferred/unmapped category boxes: {dict(deferred_cats)}")
     print(f"Visual check overlays saved: {rendered} -> {visual_dir}")
@@ -202,8 +240,16 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=Path("Data/yolo_6class"), help="Output directory (gitignored)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for group-aware split")
     parser.add_argument("--visual-samples", type=int, default=12, help="Number of visual bounding-box check images")
+    parser.add_argument("--require-images", action="store_true", help="Only export labels for images present on disk")
     args = parser.parse_args()
-    return convert_coco_to_yolo(args.coco_json, args.images_root, args.out, args.seed, args.visual_samples)
+    return convert_coco_to_yolo(
+        args.coco_json,
+        args.images_root,
+        args.out,
+        args.seed,
+        args.visual_samples,
+        args.require_images,
+    )
 
 
 if __name__ == "__main__":
