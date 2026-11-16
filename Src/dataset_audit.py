@@ -8,7 +8,9 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ALLOWED_LABELS = {"cardboard", "glass", "metal", "paper", "plastic", "trash"}
-ALLOWED_DECISIONS = {"approved", "deferred", "pending", "rejected"}
+APPROVED_DECISIONS = {"approved", "approve"}
+HOLD_DECISIONS = {"deferred", "defer_ambiguous", "defer_wrapper", "pending", "rejected", "reject"}
+ALLOWED_DECISIONS = APPROVED_DECISIONS | HOLD_DECISIONS
 ALLOWED_SPLITS = {"train", "val", "test", "unassigned"}
 REQUIRED_COLUMNS = [
     "relative_path",
@@ -42,6 +44,7 @@ def verify_manifest(manifest_path: Path, dataset_root: Path | None = None) -> in
         return 1
 
     split_counts: Counter[str] = Counter()
+    decision_counts: Counter[str] = Counter()
     approved_label_counts: Counter[str] = Counter()
     group_splits: dict[str, set[str]] = defaultdict(set)
     seen_hashes: dict[str, str] = {}
@@ -68,25 +71,28 @@ def verify_manifest(manifest_path: Path, dataset_root: Path | None = None) -> in
 
         if decision not in ALLOWED_DECISIONS:
             errors.append(f"Row {idx}: invalid review_decision '{decision}'")
+        else:
+            decision_counts[decision] += 1
 
         if split not in ALLOWED_SPLITS:
             errors.append(f"Row {idx}: invalid split '{split}'")
 
-        if decision == "approved":
+        if decision in APPROVED_DECISIONS:
             if not sha or len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
                 errors.append(f"Row {idx}: approved item '{rel_path}' must have a valid 64-char SHA256")
             if not source:
                 errors.append(f"Row {idx}: approved item '{rel_path}' missing source_or_license")
             if not group_id:
                 errors.append(f"Row {idx}: approved item '{rel_path}' missing group_id")
-            if split not in {"train", "val", "test"}:
-                errors.append(f"Row {idx}: approved item '{rel_path}' must be assigned to train, val, or test")
-            else:
+            if split in {"train", "val", "test"}:
                 approved_label_counts[label] += 1
                 split_counts[split] += 1
-                if group_id:
-                    group_splits[group_id].add(split)
-        elif decision in {"pending", "deferred", "rejected"} and split in {"train", "val", "test"}:
+                group_splits[group_id].add(split)
+            elif split == "unassigned":
+                # Approved candidate awaiting group-freeze before split admission
+                approved_label_counts[label] += 1
+                split_counts["unassigned"] += 1
+        elif decision in HOLD_DECISIONS and split in {"train", "val", "test"}:
             errors.append(f"Row {idx}: {decision} item '{rel_path}' cannot be placed in '{split}' split")
 
         if sha:
@@ -106,6 +112,7 @@ def verify_manifest(manifest_path: Path, dataset_root: Path | None = None) -> in
             errors.append(f"Group leakage: group '{group_id}' appears across splits {sorted(splits)}")
 
     print(f"Total manifest rows: {len(rows)}")
+    print(f"Decision counts: {dict(decision_counts)}")
     print(f"Approved split counts: {dict(split_counts)}")
     print(f"Approved class counts: {dict(approved_label_counts)}")
 
