@@ -1,0 +1,28 @@
+{
+  "reported_date": "2026-10-24",
+  "evidence": "User-provided Colab completion screenshot image(20261024-054555).png",
+  "verification": "Transcribed from screenshot; checkpoint and full metrics ZIP have not been independently inspected",
+  "device": "Tesla T4",
+  "epochs": 10,
+  "selected_epoch": 10,
+  "selected_validation_macro_f1_displayed": 0.85,
+  "trashnet_counts": {
+    "train": 1762,
+    "val": 377,
+    "test": 382
+  },
+  "new_packaging_counts": {
+    "train": 218,
+    "val": 45,
+    "test": 46
+  },
+  "trashnet_test_accuracy_displayed_percent": 83.2,
+  "new_wrapper_test_recall_displayed_percent": 100.0,
+  "new_wrapper_test_correct_inferred_from_count_and_recall": 46,
+  "new_model_filename": "ecosort_resnet18_taco_plastic.pth",
+  "limitations": [
+    "Positive-only wrapper recall does not establish plastic precision or six-class accuracy.",
+    "TrashNet test was inspected in earlier experiments.",
+    "Independent fresh-photo evaluation is still required."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "taco_commit": "70479ad9adc3da971a8ae75ac97eb1026910eec7",
+  "annotations_url": "https://raw.githubusercontent.com/pedropro/TACO/70479ad9adc3da971a8ae75ac97eb1026910eec7/data/annotations.json",
+  "annotations_sha256": "812c2e3f0d336b437f276597715de2abb08bb8a641599c45f593d233ec66457b",
+  "candidate_objects": 750,
+  "downloaded_source_images": 475,
+  "failed_source_images": 0,
+  "counts": {
+    "train": 218,
+    "test": 46,
+    "val": 45
+  },
+  "source_category_counts": {
+    "Plastic film": 186,
+    "Other plastic wrapper": 96,
+    "Crisp packet": 27
+  },
+  "skip_counts": {
+    "too_small": 441
+  },
+  "min_crop_side": 48,
+  "seed": 42,
+  "split_unit": "source scene / exact crop duplicate / whole-image dHash distance <= 4",
+  "label_policy": "EcoSort plastic includes visually identified flexible plastic packaging, including metallized snack packets, following the project packaging convention. Source labels do not verify chemical composition or recyclability.",
+  "preparation_date": "2026-10-24",
+  "new_training_images": 218,
+  "group_leakage_detected": false,
+  "exact_crop_leakage_detected": false,
+  "training_run": false,
+  "note": "Actual preparation check in this workspace, not GPU training results. Counts can change if source image availability changes."
+}
