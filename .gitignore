@@ -5,11 +5,13 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
+# Local datasets, checkpoints and generated prediction arrays
 /Data/
 /Models/
 *.pth
 *.pt
 *.zip
+*.npz
 
 .env
 .env.*

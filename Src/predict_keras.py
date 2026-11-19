@@ -73,6 +73,9 @@ class E2Predictor:
             verbose=0
         )[0]
 
+        if scores.shape != (len(CLASSES),):
+            raise ValueError("Invalid model score shape")
+
         if (
             not np.isfinite(scores).all()
             or (scores < 0).any()
