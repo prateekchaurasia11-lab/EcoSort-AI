@@ -12,10 +12,11 @@ from pathlib import Path
 from Src.dataset_audit import resolve_dataset_path
 
 try:
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageOps
 except ImportError:  # pragma: no cover
     Image = None  # type: ignore[assignment]
     ImageDraw = None  # type: ignore[assignment]
+    ImageOps = None  # type: ignore[assignment]
 
 CLASS_NAMES = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
 CLASS_TO_ID = {name: idx for idx, name in enumerate(CLASS_NAMES)}
@@ -136,7 +137,7 @@ def _convert_coco_to_yolo(
             source = resolve_dataset_path(img["file_name"], images_root)
             with Image.open(source) as image:
                 image.load()
-                if image.size != (img["width"], img["height"]):
+                if ImageOps.exif_transpose(image).size != (img["width"], img["height"]):
                     raise ValueError(f"dimension mismatch: {img['file_name']}")
     except (OSError, ValueError, KeyError) as exc:
         print(f"ERROR: Source image validation failed: {exc}")
@@ -237,12 +238,17 @@ def _convert_coco_to_yolo(
             if src_img.is_file():
                 dst_img = image_dir / f"{out_stem}{src_img.suffix.lower()}"
                 if not dst_img.exists():
-                    shutil.copy2(src_img, dst_img)
+                    with Image.open(src_img) as original:
+                        if original.getexif().get(274, 1) == 1:
+                            shutil.copy2(src_img, dst_img)
+                        else:
+                            corrected = ImageOps.exif_transpose(original)
+                            corrected.save(dst_img)
                 copied_images += 1
 
                 if Image is not None and ImageDraw is not None and rendered < visual_samples:
                     with Image.open(src_img) as im:
-                        canvas = im.convert("RGB")
+                        canvas = ImageOps.exif_transpose(im).convert("RGB")
                         draw = ImageDraw.Draw(canvas)
                         for (bx, by, bw_px, bh_px), lbl in draw_boxes:
                             draw.rectangle([bx, by, bx + bw_px, by + bh_px], outline="lime", width=3)
