@@ -1,0 +1,7 @@
+# E6 detector tooling. Versions are deliberately not pinned here: the training run
+# records the exact ultralytics/torch versions in run_manifest.json and protocol.json.
+ultralytics
+numpy
+pillow
+pyyaml
+streamlit
