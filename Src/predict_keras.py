@@ -5,7 +5,10 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
-from PIL import Image, ImageOps
+if __package__:
+    from .e2_preprocessing import decode_pixels
+else:
+    from e2_preprocessing import decode_pixels
 
 CLASSES = [
     "cardboard", "glass", "metal",
@@ -19,7 +22,10 @@ EXPECTED_SHA256 = (
 
 class E2Predictor:
 
-    def __init__(self, checkpoint, protocol_path):
+    def __init__(self, checkpoint, protocol_path, decoder="tensorflow"):
+        if decoder not in {"tensorflow", "pil"}:
+            raise ValueError("Decoder must be tensorflow or pil")
+        self.decoder = decoder
         self.checkpoint = Path(checkpoint)
         self.protocol = json.loads(
             Path(protocol_path).read_text(encoding="utf-8")
@@ -61,12 +67,7 @@ class E2Predictor:
             raise ValueError("Incorrect output shape")
 
     def predict(self, image_path):
-        with Image.open(image_path) as opened:
-            image = ImageOps.exif_transpose(opened).convert("RGB")
-
-            pixels = tf.image.resize(
-                np.asarray(image), [224, 224]
-            ).numpy()
+        pixels = decode_pixels(Path(image_path).read_bytes(), self.decoder)
 
         scores = self.model.predict(
             pixels.astype(np.float32)[None],
@@ -90,7 +91,9 @@ class E2Predictor:
             "model_score": float(scores[index]),
             "scores": dict(zip(CLASSES, map(float, scores))),
             "calibrated": False,
-            "checkpoint_sha256": self.checkpoint_sha256
+            "checkpoint_sha256": self.checkpoint_sha256,
+            "decoder": self.decoder,
+            "preprocessing_version": "e2-tf-bilinear-224-" + self.decoder,
         }
 
 
@@ -99,11 +102,12 @@ def main():
     parser.add_argument("image")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--protocol", required=True)
+    parser.add_argument("--decoder", choices=["tensorflow", "pil"], default="tensorflow")
 
     args = parser.parse_args()
 
     predictor = E2Predictor(
-        args.checkpoint, args.protocol
+        args.checkpoint, args.protocol, args.decoder
     )
 
     print(json.dumps(

@@ -174,6 +174,27 @@ class EvaluationAuditTests(unittest.TestCase):
         self.assertEqual(result["per_class"]["glass"]["recall"], 1.0)
         self.assertEqual(result["per_class"]["metal"]["support"], 0)
 
+    def test_blank_group_column_is_not_a_completed_audit(self):
+        rows = [{"split": "test", "label": "glass",
+                 "source_archive_path": "dataset-resized/glass/a.png", "group_id": ""}]
+        self.write_dataset(rows, {"split/test/glass/a.png": self.image_bytes((4, 5, 6))})
+        _, audit = audit_dataset_manifest(self.csv_path, self.zip_path)
+        self.assertIn("not available", audit["group_leakage_check"])
+        self.assertEqual(audit["rows_without_group_id"], 1)
+
+    def test_partial_group_coverage_is_reported(self):
+        rows = [{"split": "test", "label": "glass",
+                 "source_archive_path": "dataset-resized/glass/a.png", "group_id": "g1"},
+                {"split": "test", "label": "glass",
+                 "source_archive_path": "dataset-resized/glass/b.png", "group_id": ""}]
+        self.write_dataset(rows, {
+            "split/test/glass/a.png": self.image_bytes((4, 5, 6)),
+            "split/test/glass/b.png": self.image_bytes((6, 5, 4)),
+        })
+        _, audit = audit_dataset_manifest(self.csv_path, self.zip_path)
+        self.assertIn("not available", audit["group_leakage_check"])
+        self.assertEqual(audit["rows_without_group_id"], 1)
+
     def test_rejects_empty_metric_input(self):
         with self.assertRaisesRegex(ValueError, "empty split"):
             classification_metrics([], [])

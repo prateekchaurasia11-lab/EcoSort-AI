@@ -10,7 +10,12 @@ from io import BytesIO
 from pathlib import Path, PurePosixPath
 
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
+
+if __package__:
+    from .e2_preprocessing import decode_pixels
+else:
+    from e2_preprocessing import decode_pixels
 
 CLASSES = [
     "cardboard", "glass", "metal",
@@ -109,6 +114,7 @@ def audit_dataset_manifest(manifest_csv, dataset_zip):
     groups = defaultdict(set)
     split_counts = defaultdict(int)
     label_counts = defaultdict(int)
+    missing_group_ids = 0
     missing_files = []
     decode_errors = []
 
@@ -141,6 +147,8 @@ def audit_dataset_manifest(manifest_csv, dataset_zip):
             hashes[digest].append(record)
             if record["group_id"]:
                 groups[record["group_id"]].add(record["split"])
+            else:
+                missing_group_ids += 1
 
             split_counts[record["split"]] += 1
             label_counts[record["label"]] += 1
@@ -227,10 +235,11 @@ def audit_dataset_manifest(manifest_csv, dataset_zip):
             "group_id" in fields or "source_group_id" in fields
         ),
         "nonempty_group_ids": len(groups),
+        "rows_without_group_id": missing_group_ids,
         "cross_split_group_leaks": 0,
         "group_leakage_check": (
-            "performed" if ("group_id" in fields or "source_group_id" in fields)
-            else "not available: manifest has no group_id/source_group_id column"
+            "performed" if missing_group_ids == 0 else
+            f"not available for all rows: {missing_group_ids} rows lack group IDs"
         ),
     }
 
@@ -296,7 +305,9 @@ def classification_metrics(labels, predictions):
 
 def evaluate(checkpoint, protocol_path, manifest_csv, dataset_zip,
              split, batch_size=32, device="auto",
-             output_json=None, output_npz=None):
+             output_json=None, output_npz=None, decoder="tensorflow"):
+    if decoder not in {"tensorflow", "pil"}:
+        raise ValueError("Decoder must be tensorflow or pil")
     if batch_size < 1:
         raise ValueError("batch_size must be at least 1")
     if split not in {"train", "val", "test"}:
@@ -378,14 +389,7 @@ def evaluate(checkpoint, protocol_path, manifest_csv, dataset_zip,
 
             for row in batch_rows:
                 image_bytes = archive.read(row["archive_path"])
-                with Image.open(BytesIO(image_bytes)) as opened:
-                    image = ImageOps.exif_transpose(opened).convert("RGB")
-                    pixels = tf.image.resize(
-                        np.asarray(image),
-                        [224, 224],
-                        method="bilinear",
-                        antialias=False,
-                    ).numpy()
+                pixels = decode_pixels(image_bytes, decoder)
                 batch_images.append(pixels.astype(np.float32))
 
             batch = np.stack(batch_images).astype(np.float32)
@@ -427,6 +431,8 @@ def evaluate(checkpoint, protocol_path, manifest_csv, dataset_zip,
             "input_size": [224, 224],
             "preprocessing": EXPECTED_PREPROCESSING,
             "scores_calibrated": False,
+            "decoder": decoder,
+            "preprocessing_version": "e2-tf-bilinear-224-" + decoder,
         },
         "dataset": {
             "manifest_path": str(manifest_csv),
@@ -478,6 +484,8 @@ def evaluate(checkpoint, protocol_path, manifest_csv, dataset_zip,
             labels=labels,
             files=paths,
             checkpoint_sha256=np.asarray(checkpoint_hash),
+            decoder=np.asarray(decoder),
+            preprocessing_version=np.asarray("e2-tf-bilinear-224-" + decoder),
         )
 
     return report
@@ -496,6 +504,7 @@ def main():
     parser.add_argument("--device", choices=["auto", "cpu", "gpu"], default="auto")
     parser.add_argument("--output-json")
     parser.add_argument("--output-npz")
+    parser.add_argument("--decoder", choices=["tensorflow", "pil"], default="tensorflow")
     args = parser.parse_args()
 
     report = evaluate(
@@ -508,6 +517,7 @@ def main():
         device=args.device,
         output_json=args.output_json,
         output_npz=args.output_npz,
+        decoder=args.decoder,
     )
     print(json.dumps(report, indent=2))
 
