@@ -179,13 +179,8 @@ class YoloPrepareRegressionTests(unittest.TestCase):
             )
             out_dir = root / "yolo_out"
             rc = convert_coco_to_yolo(coco, root, out_dir, visual_samples=0)
-            self.assertEqual(rc, 0)
-            txt_files = list((out_dir / "labels").rglob("*.txt"))
-            self.assertEqual(len(txt_files), 2)
-            for f in txt_files:
-                lines = f.read_text(encoding="utf-8").strip().splitlines()
-                self.assertEqual(len(lines), 1)
-                self.assertTrue(lines[0].startswith("1 "))
+            self.assertEqual(rc, 1)
+            self.assertFalse(out_dir.exists())
 
 
 if __name__ == "__main__":

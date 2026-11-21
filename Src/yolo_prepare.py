@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 import shutil
+import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
+from Src.dataset_audit import resolve_dataset_path
 
 try:
     from PIL import Image, ImageDraw
@@ -62,8 +65,8 @@ TACO_TO_ECOSORT: dict[str, str | None] = {
     "Tupperware": "plastic",
     "Spread tub": "plastic",
     "Six pack rings": "plastic",
-    "Other plastic wrapper": "trash",
-    "Crisp packet": "trash",
+    "Other plastic wrapper": None,
+    "Crisp packet": None,
     "Cigarette": "trash",
     "Styrofoam piece": "trash",
     "Foam food container": "trash",
@@ -87,16 +90,22 @@ TACO_TO_ECOSORT: dict[str, str | None] = {
 
 
 def coco_bbox_to_yolo(bbox: list[float], img_w: int, img_h: int) -> tuple[float, float, float, float] | None:
-    x, y, w, h = bbox
+    if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+        return None
+    try:
+        x, y, w, h = map(float, bbox)
+        if not all(math.isfinite(v) for v in (x, y, w, h, img_w, img_h)):
+            return None
+    except (TypeError, ValueError):
+        return None
     if img_w <= 0 or img_h <= 0 or w <= 0 or h <= 0:
         return None
-    x_center = max(0.0, min(1.0, (x + w / 2.0) / img_w))
-    y_center = max(0.0, min(1.0, (y + h / 2.0) / img_h))
-    norm_w = max(0.0, min(1.0, w / img_w))
-    norm_h = max(0.0, min(1.0, h / img_h))
-    if norm_w <= 0 or norm_h <= 0:
+    left, top = max(0.0, x), max(0.0, y)
+    right, bottom = min(float(img_w), x + w), min(float(img_h), y + h)
+    if right <= left or bottom <= top:
         return None
-    return x_center, y_center, norm_w, norm_h
+    return ((left + right) / (2 * img_w), (top + bottom) / (2 * img_h),
+            (right - left) / img_w, (bottom - top) / img_h)
 
 
 def safe_output_stem(rel_name: str, img_id: int) -> str:
@@ -107,7 +116,7 @@ def safe_output_stem(rel_name: str, img_id: int) -> str:
     return f"{parent_part}_{rel.stem}_id{img_id}"
 
 
-def convert_coco_to_yolo(
+def _convert_coco_to_yolo(
     coco_json: Path,
     images_root: Path,
     output_dir: Path,
@@ -118,6 +127,20 @@ def convert_coco_to_yolo(
     data = json.loads(coco_json.read_text(encoding="utf-8"))
     cat_id_to_name = {c["id"]: c["name"] for c in data.get("categories", [])}
     images_by_id = {img["id"]: img for img in data.get("images", [])}
+    if Image is None or not images_by_id:
+        print("ERROR: Pillow and a nonempty image inventory are required.")
+        return 1
+    # Preflight every source before creating any output, even with --visual-samples 0.
+    try:
+        for img in images_by_id.values():
+            source = resolve_dataset_path(img["file_name"], images_root)
+            with Image.open(source) as image:
+                image.load()
+                if image.size != (img["width"], img["height"]):
+                    raise ValueError(f"dimension mismatch: {img['file_name']}")
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"ERROR: Source image validation failed: {exc}")
+        return 1
 
     anns_by_image: dict[int, list[dict]] = defaultdict(list)
     for ann in data.get("annotations", []):
@@ -125,11 +148,19 @@ def convert_coco_to_yolo(
             continue
         anns_by_image[ann["image_id"]].append(ann)
 
-    # Group by batch/folder prefix to prevent scene/session leakage across train/val/test
+    # Explicit group IDs are preferred; folder grouping remains a heuristic.
     groups: dict[str, list[int]] = defaultdict(list)
     for img_id, img_info in images_by_id.items():
+        annotations = anns_by_image.get(img_id, [])
+        # Hold out the whole image to avoid learning deferred objects as background.
+        if not annotations or any(
+            TACO_TO_ECOSORT.get(cat_id_to_name.get(ann["category_id"])) is None
+            or coco_bbox_to_yolo(ann.get("bbox"), img_info["width"], img_info["height"]) is None
+            for ann in annotations
+        ):
+            continue
         rel = Path(img_info["file_name"])
-        group_key = rel.parent.as_posix() if rel.parent.as_posix() != "." else rel.stem.split("_")[0]
+        group_key = str(img_info.get("group_id") or (rel.parent.as_posix() if rel.parent.as_posix() != "." else rel.stem.split("_")[0]))
         groups[group_key].append(img_id)
 
     rng = random.Random(seed)
@@ -137,8 +168,14 @@ def convert_coco_to_yolo(
     rng.shuffle(group_keys)
 
     n_groups = len(group_keys)
-    n_train = max(1, int(0.7 * n_groups)) if n_groups >= 3 else n_groups
-    n_val = max(1, int(0.15 * n_groups)) if n_groups >= 3 else 0
+    if n_groups < 3:
+        print("ERROR: At least three eligible groups are required for train/val/test export.")
+        return 1
+    if output_dir.exists() and any(output_dir.iterdir()):
+        print("ERROR: Choose a fresh output directory to avoid mixing old and new splits.")
+        return 1
+    n_train = min(n_groups - 2, max(1, int(0.7 * n_groups)))
+    n_val = min(n_groups - n_train - 1, max(1, int(0.15 * n_groups)))
     split_for_group = {}
     for idx, g in enumerate(group_keys):
         if idx < n_train:
@@ -169,9 +206,7 @@ def convert_coco_to_yolo(
         for img_id in img_ids:
             img_info = images_by_id[img_id]
             rel_name = img_info["file_name"]
-            src_img = images_root / rel_name
-            if require_images and not src_img.is_file():
-                continue
+            src_img = resolve_dataset_path(rel_name, images_root)
 
             w, h = int(img_info["width"]), int(img_info["height"])
             yolo_lines: list[str] = []
@@ -190,7 +225,7 @@ def convert_coco_to_yolo(
                 xc, yc, bw, bh = yolo_box
                 yolo_lines.append(f"{cls_id} {xc:.6f} {yc:.6f} {bw:.6f} {bh:.6f}")
                 box_counts[mapped] += 1
-                draw_boxes.append((ann["bbox"], mapped))
+                draw_boxes.append(([(xc - bw / 2) * w, (yc - bh / 2) * h, bw * w, bh * h], mapped))
 
             if not yolo_lines:
                 continue
@@ -216,7 +251,7 @@ def convert_coco_to_yolo(
                     rendered += 1
 
     yaml_text = (
-        f"path: {output_dir.as_posix()}\n"
+        f"path: {json.dumps(output_dir.resolve().as_posix())}\n"
         "train: images/train\n"
         "val: images/val\n"
         "test: images/test\n"
@@ -230,6 +265,43 @@ def convert_coco_to_yolo(
     print(f"Converted boxes per class: {dict(box_counts)}")
     print(f"Deferred/unmapped category boxes: {dict(deferred_cats)}")
     print(f"Visual check overlays saved: {rendered} -> {visual_dir}")
+    print("Mapping version: reviewed-defer-wrappers-2026-11-19; images with deferred/invalid boxes held out.")
+    print("Group disjointness follows supplied IDs/folder heuristic; item/session independence requires review.")
+    return 0
+
+
+def convert_coco_to_yolo(
+    coco_json: Path,
+    images_root: Path,
+    output_dir: Path,
+    seed: int = 42,
+    visual_samples: int = 12,
+    require_images: bool = False,
+) -> int:
+    """Publish a complete export from staging, preserving previous exports."""
+    output_dir = output_dir.resolve()
+    if output_dir.exists():
+        print("ERROR: Output already exists; choose a new export directory.")
+        return 1
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".ecosort-export-", dir=output_dir.parent) as tmp:
+        staged = Path(tmp) / "dataset"
+        result = _convert_coco_to_yolo(coco_json, images_root, staged, seed, visual_samples, require_images)
+        if result:
+            return result
+        # The export's root changes when the staged directory is published.
+        yaml_path = staged / "data.yaml"
+        yaml_text = yaml_path.read_text(encoding="utf-8").splitlines()
+        yaml_text[0] = f"path: {json.dumps(output_dir.as_posix())}"
+        yaml_path.write_text("\n".join(yaml_text) + "\n", encoding="utf-8")
+        for split in ("train", "val", "test"):
+            images = {path.stem for path in (staged / "images" / split).iterdir()}
+            labels = {path.stem for path in (staged / "labels" / split).glob("*.txt")}
+            if not images or images != labels:
+                print(f"ERROR: Incomplete image/label pairs in {split}.")
+                return 1
+        staged.rename(output_dir)
+    print(f"Published complete dataset: {output_dir}")
     return 0
 
 
@@ -240,7 +312,7 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=Path("Data/yolo_6class"), help="Output directory (gitignored)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for group-aware split")
     parser.add_argument("--visual-samples", type=int, default=12, help="Number of visual bounding-box check images")
-    parser.add_argument("--require-images", action="store_true", help="Only export labels for images present on disk")
+    parser.add_argument("--require-images", action="store_true", help="Compatibility option; source images are always required")
     args = parser.parse_args()
     return convert_coco_to_yolo(
         args.coco_json,
