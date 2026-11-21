@@ -13,3 +13,6 @@ __pycache__/
 
 .env
 .env.*
+# E6 detector training outputs
+runs/
+Results/e6_*/
