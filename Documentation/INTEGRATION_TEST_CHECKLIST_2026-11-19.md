@@ -1,60 +1,62 @@
 # EcoSort-AI Integration Test and Demo Checklist
 **Owner:** Rahul Singh (integration-testing)  
-**Evidence date:** 21 November 2026  
-**Related PR:** #5 — E2 inference, decoder, evaluator and Streamlit baseline demo
+**Evidence date:** 22 November 2026  
+**Related PR:** #5 — E2 inference, evaluator, decoder and Streamlit baseline demo
 
-## 1. Reproducible E2 environment
-- [x] Verify E2 checkpoint SHA-256: 466d5514de963ccbb3606ff3cbe39c77c42fde2442ab3f108d555722e408a27e
-- [x] Verify protocol architecture, six-class order, 224x224 input and embedded rescaling.
-- [x] Pin TensorFlow 2.21.0 and Keras 3.15.1 in the E2 inference requirements.
-- [x] Verify TensorFlow 2.21.0 / Keras 3.15.1 in the restarted Colab runtime.
-- [x] Keep model weights, protocols, datasets and generated prediction NPZ files outside Git.
+## 1. Source and integrity
+- [x] Verify v2 patch ZIP SHA-256: `de9c1665c0dc0fa7d3a2c068684f50d89fc82b5f3db499ac18ebd5ff452f599d`.
+- [x] Verify runnable demo ZIP SHA-256: `745137b80e373b62175904f6dfc76382e20e71fd98a580657e4fc8499b78b666`.
+- [x] Verify both ZIP CRCs.
+- [x] Verify E2 checkpoint SHA-256: `466d5514de963ccbb3606ff3cbe39c77c42fde2442ab3f108d555722e408a27e`.
+- [x] Preserve the existing PyTorch `Src/predict.py` and the E6 detector files from latest `main`.
+- [x] Keep model weights, protocols, data archives, sample image and generated NPZs out of Git.
 
-## 2. Regression tests
-- [x] v2 decoder/evaluator patch test log: 27 tests, all passed.
-- [x] Supplied runnable Streamlit demo log: 33 tests, 0 failures.
-- [x] Test wrong checkpoint hash, architecture, class order, input size and preprocessing.
-- [x] Test invalid/non-finite/negative/unnormalized score outputs.
-- [x] Test both decoder paths and shared decoder use by adapter/evaluator.
-- [x] Test blank/partial group-ID coverage is reported as incomplete.
-- [x] Test upload size/type/pixel constraints and temporary-file cleanup.
-- [x] Keep existing PyTorch Src/predict.py unchanged.
-- [ ] Re-run the full 33-test suite in Rahul's own clean local/Colab environment after applying this commit.
+## 2. E2 inference and preprocessing
+- [x] Shared TensorFlow decoder used by both E2 prediction and evaluation.
+- [x] Keep `--decoder tensorflow` as default and `--decoder pil` as the separately versioned comparison path.
+- [x] Record decoder and preprocessing version in prediction/evaluation output.
+- [x] Validate class order, architecture, input shape, output shape, checkpoint hash and score vector.
+- [x] Do not apply external normalization; the model embeds its Rescaling layer.
+- [x] Mark scores as uncalibrated.
 
-## 3. Dataset audit and evaluation
-- [x] Verify clean manifest membership against the original split ZIP.
-- [x] Verify 2,521 manifest rows: 1,762 train / 377 validation / 382 test.
-- [x] Verify zero missing images, decode errors, exact cross-split byte duplicates and conflicting-label duplicate hashes.
-- [x] Record group-ID coverage explicitly: the public manifest has 2,521 rows without group IDs; physical item/session leakage is not established.
-- [x] Keep PIL and TensorFlow decoder results as separate reports.
-- [x] TensorFlow decoder validation: 327/377 correct (86.7374%), macro F1 0.8540741.
-- [x] TensorFlow decoder test diagnostic: 317/382 correct (82.9843%), macro F1 0.8012787; 382/382 stored historical argmax agreement.
-- [x] Preserve previous PIL validation result separately: 87.2679%, macro F1 0.8589876.
-- [ ] Obtain reviewed physical item/session group IDs for any expanded/local challenge cohort before split freezing.
-- [ ] Do not tune model settings or thresholds against the reused public test split.
+## 3. Regression evidence
+- [x] Original PR #5 suite: 21 tests passed in Colab with TensorFlow 2.21.0 / Keras 3.15.1.
+- [x] Prateek's v2 patch verification log: 27 tests passed.
+- [x] Supplied demo verification log: 33 tests passed, 0 failures.
+- [x] Demo AppTest uses a mocked uploader but executes the real E2 checkpoint, classification and result-rendering path.
+- [x] Independent local syntax compilation passed for `Src/`, `app.py` and `tests/`.
+- [x] Independent local upload-service unit tests: 5/5 passed.
+- [ ] Full 33-test suite rerun in Rahul's own TensorFlow/Streamlit runtime.
+- [ ] Graphical browser upload and mobile-width layout smoke test.
 
-## 4. E2 historical provenance
-- [x] Preserve historical predictions and fresh PIL reproduction separately.
-- [x] Export recovered Keras 3.15.1 inference cell and helper cells 1–4 verbatim.
-- [x] Run and preserve TensorFlow decoder NPZ, report, three-image pixel differences and input tensor hashes.
-- [ ] Await review of the decoder evidence. Prediction reproduction does not prove the original historical generation source or checkpoint-to-prediction binding.
+**Verification limitation:** the 27/33 results above are recorded in the supplied Prateek bundle logs. This container has no TensorFlow/Keras/Streamlit packages and cannot reach PyPI (DNS/network resolution failed), so the full suite could not be rerun here. The local independent checks are limited to syntax compilation and five upload-service tests.
 
-## 5. Streamlit E2 application
-- [x] Add app.py and Src/demo_service.py. The app calls E2Predictor directly; a separate HTTP backend is not required for this baseline.
-- [x] Restrict uploads to JPEG/PNG, 10 MB and 20 megapixels; reject animated/corrupt files.
-- [x] Display predicted class, six raw uncalibrated scores, general rule-dependent disposal guidance and downloadable JSON.
-- [x] Show checkpoint SHA-256, decoder and preprocessing version.
-- [x] Clean temporary inference files on success and failure.
-- [x] Supplied AppTest log exercises upload, Classify and result rendering with a real checkpoint; upload widget is mocked.
-- [ ] Run a graphical desktop browser upload and mobile-width layout check.
-- [ ] Confirm the app's local model paths and dependencies on the target demo machine.
-
-## 6. Other project items
-- [x] E6 detector tooling exists separately on latest main via PR #6; this E2 Streamlit page does not yet integrate E6 detection.
-- [ ] Recover the separate E1 best.keras checkpoint if needed for the approved E1/E2 demo.
+## 4. Dataset audit and evaluation
+- [x] Clean manifest: 2,521 rows — 1,762 train / 377 validation / 382 test.
+- [x] Zero missing images, decode errors, exact cross-split byte duplicates or conflicting-label duplicate hashes.
+- [x] Group coverage is explicitly incomplete/unavailable: the public baseline manifest has no physical item/session IDs.
+- [x] Preserve PIL and TensorFlow decoder outputs as separate results.
+- [x] TensorFlow decoder validation: 327/377 correct, 86.7374% accuracy, macro F1 0.8540741.
+- [x] TensorFlow decoder test diagnostic: 317/382 correct, 82.9843% accuracy, macro F1 0.8012787; 382/382 historical argmax agreement, max score difference 4.827976e-6.
+- [x] Earlier PIL validation result remains separate: 87.2679% accuracy, macro F1 0.8589876.
 - [ ] Obtain reviewed physical item/session group IDs for expanded/local challenge data.
-- [ ] E3/E4 research and E5 calibration/rejection remain separate pending work.
-- [ ] Final integrated regression, demo recording and report/presentation.
+- [ ] Do not tune against the reused public test cohort.
 
-## Interpretation and limits
-The TensorFlow-decoder validation result and earlier PIL-decoder validation result are distinct. The public 382-image test set is reused for historical/diagnostic reproduction and is not an independent local cohort. Raw model scores are uncalibrated. The Streamlit demo is a runnable baseline, not a claim that all research experiments are complete. Group/session independence is not established without reviewed IDs. The provided AppTest uses a mocked upload widget; a graphical browser check remains pending.
+## 5. Streamlit E2 baseline
+- [x] Add `app.py` and `Src/demo_service.py`; app calls the E2 predictor directly.
+- [x] Bounded JPEG/PNG upload; max 10 MB and 20 megapixels; still images only.
+- [x] Display predicted class, raw uncalibrated model score, six scores, general local-rule-dependent disposal guidance and downloadable JSON.
+- [x] Show checkpoint identity, decoder and preprocessing version.
+- [x] Clean temporary inference files after success and failure.
+- [x] Supplied real-checkpoint AppTest covers upload/classify/result path with mocked upload widget.
+- [ ] Manual graphical browser upload and mobile layout check.
+
+## 6. Other pending work
+- [x] E6 detector tooling exists separately on latest `main`; it is not integrated into this E2 Streamlit page.
+- [ ] Recover the separate E1 `best.keras` checkpoint if needed for the approved E1/E2 demo.
+- [ ] Obtain reviewed physical item/session IDs for expanded/local challenge cohort before split freezing.
+- [ ] E3/E4 experiments and E5 calibration/rejection work remain pending.
+- [ ] Final end-to-end regression, demo recording and report/presentation.
+
+## Interpretation
+PIL and TensorFlow decoder metrics are separate and must not be mixed. The public 382-image test set is reused for historical/diagnostic reproduction, not an independent local cohort. App scores are uncalibrated. Exact-byte hash checks do not establish physical-session independence. Passing AppTest is not a substitute for a manual graphical browser/mobile check.

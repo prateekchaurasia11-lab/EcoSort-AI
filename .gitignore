@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
+# Local datasets, checkpoints and generated prediction arrays
 /Data/
 /Models/
 *.pth
@@ -14,6 +15,7 @@ __pycache__/
 
 .env
 .env.*
+
 # E6 detector training outputs
 runs/
 Results/e6_*/
